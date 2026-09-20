@@ -1,0 +1,40 @@
+# Online Retrieval Pipeline Configuration
+models:
+  embedding:
+    name: "BAAI/bge-large-en-v1.5"
+    path: "BAAI/bge-large-en-v1.5"
+    embedding_dim: 1024
+    device: "cuda"
+
+  reranking:
+    name: "openai/clip-vit-base-patch32"
+    path: "openai/clip-vit-base-patch32"
+    embedding_dim: 512
+    device: "cuda"
+
+  text_normalization:
+    name: "Qwen/Qwen2.5-0.5B-Instruct"
+    path: "models/qwen_0.5b_ecommerce_lora"
+    base_path: "Qwen/Qwen2.5-0.5B-Instruct"
+    device: "cuda"
+
+database:
+  faiss:
+    index_path: "data/processed/faiss/bge_index.faiss"
+    ids_path: "data/processed/faiss/bge_index_ids.npy"
+  sqlite:
+    db_path: "data/processed/products.db"
+    table_name: "products"
+  clip_matrix:
+    embeddings_path: "data/processed/faiss/clip_image_embeddings.npy"
+    pids_path: "data/processed/faiss/clip_image_pids.npy"
+    ids_path: "data/processed/faiss/clip_image_db_ids.npy"
+
+dataset:
+  images_dir: "data/images"
+
+search:
+  top_k: 10
+  retrieval_k: 50
+  text_weight: 0.35
+  image_weight: 0.65

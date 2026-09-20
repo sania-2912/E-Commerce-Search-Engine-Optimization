@@ -65,45 +65,64 @@ Evaluated on **4,681 fashion & lifestyle products** across a **100-query scienti
 ## 📁 Repository Structure
 
 ```text
-├── backend/
-│   ├── app.py                      # FastAPI application entrypoint
-│   ├── config/settings.py          # Centralized configuration & file paths
-│   ├── indexing/
-│   │   └── build_clip_image_embeddings.py  # Precomputes 512-dim RAM matrix
-│   ├── models/schemas.py           # Pydantic API response & search models
+Ecommerce_Search_Engine/
+├── Indexing_Pipeline/              # Complete Offline Indexing Pipeline
+│   ├── config/indexing.yaml        # Model & storage paths configuration
+│   ├── data/                       # Batch image loader & image registry
+│   ├── logic/                      # Captioning, text normalization, dense embedding
+│   ├── models/                     # Qwen2-VL, Qwen2.5-0.5B, BGE-Large wrappers
+│   ├── storage/                    # FAISS IndexFlatIP & SQLite database writers
+│   ├── utils/                      # Batching generators, logging, validation
+│   ├── scripts/                    # Smartphone catalog generation & indexing scripts
+│   ├── run_indexing.py             # Main entry point for offline indexing
+│   └── README.md
+│
+├── Retrieval_Pipeline/             # High-Speed Online Retrieval Pipeline
+│   ├── config/retrieval.yaml       # Retrieval thresholds and model paths
+│   ├── logic/                      # LoRA query parsing, FAISS search, CLIP reranker
+│   ├── models/                     # CLIP wrapper, unified GPU model loader, schemas
+│   ├── storage/                    # FAISS searcher & SQLite reader
+│   ├── utils/                      # Logging utilities
+│   ├── retrieval_pipeline.py       # Two-Stage enterprise search pipeline
+│   ├── run_test.py                 # Standalone CLI test script
+│   └── README.md
+│
+├── backend/                        # Production FastAPI REST API Server
 │   ├── routes/                     # /search and /health endpoints
-│   └── services/
-│       ├── model_loader.py         # Unified single-pass GPU model initialization
-│       └── search_service.py       # Two-Stage retrieval & score fusion logic
+│   ├── config/settings.py          # Server settings & path resolutions
+│   ├── services/                   # Shims delegating to Retrieval_Pipeline
+│   └── app.py                      # FastAPI app entrypoint & static image server
 │
 ├── frontend/                       # Modern React + Vite User Interface
 │   ├── src/
-│   │   ├── App.jsx                 # Main consumer interface & filter pills
-│   │   ├── components/             # SearchBar, ProductCard, ResultsGrid, DevPanel
-│   │   └── services/api.js         # Backend API client with image URL handling
+│   │   ├── App.jsx                 # Homepage layout & interactive state
+│   │   ├── components/             # CategoryNavBar, HeroPromoBanners, SearchBar, ProductCard
+│   │   └── services/api.js         # API client connecting to backend
 │   └── package.json
 │
-├── data/
-│   └── processed/
-│       ├── faiss/                  # BGE FAISS index & precomputed CLIP vectors
-│       ├── captions_checkpoint.json# Qwen2-VL AI-generated captions (4,681 items)
-│       ├── normalized_checkpoint.json# Qwen-0.5B extracted search tokens
-│       └── products.db             # Relational SQLite metadata database
+├── data/                           # Dataset & Vector Indexes
+│   ├── images/                     # Product images catalog (including 200 smartphones)
+│   ├── processed/
+│   │   ├── faiss/                  # BGE FAISS index & precomputed CLIP vectors
+│   │   ├── products.db             # Relational SQLite metadata database (6,881 items)
+│   │   ├── captions_checkpoint.json
+│   │   └── normalized_checkpoint.json
+│   └── raw/
 │
 ├── models/
-│   └── qwen_0.5b_ecommerce_lora/   # Fine-tuned LoRA adapter (val loss: 0.62)
+│   └── qwen_0.5b_ecommerce_lora/   # Fine-tuned LoRA adapter weights (val loss: 0.62)
 │
-├── research/
-│   ├── prepare_finetuning_data.py  # Synthesizes 8,577 training pairs
-│   ├── train_lora_qwen.py          # PEFT LoRA training script
-│   └── evaluate_ir_metrics.py      # Scientific IR benchmark (NDCG/MRR/P@5)
+├── research/                       # Model training & scientific IR evaluation
+│   ├── prepare_finetuning_data.py
+│   ├── train_lora_qwen.py
+│   └── evaluate_ir_metrics.py
 │
-├── notebooks/                      # Exploratory data analysis & prototyping
-│   ├── 01_dataset_exploration.ipynb
-│   └── ...
+├── notebooks/                      # Exploratory data analysis notebooks
 │
-├── Figure1_Architecture.jpg        # Architecture diagram
-├── Figure2_Flowchart.jpg           # Online procedural flowchart
+├── app.py                          # Root launcher: python app.py
+├── requirements.txt                # Complete Python dependencies
+├── how_to_run.txt                  # Step-by-step setup and run instructions
+├── download_model.txt              # Model download links and commands
 └── README.MD
 ```
 
@@ -117,34 +136,26 @@ Evaluated on **4,681 fashion & lifestyle products** across a **100-query scienti
 * **Python:** 3.10+
 * **Node.js:** 18+
 
-### 2. Backend Setup
+### 2. Setup & Execution
 ```bash
 # Clone the repository
 git clone https://github.com/SandeshAwate6055/E-Commerce-Search-Engine-Optimization-.git
 cd E-Commerce-Search-Engine-Optimization-
 
-# Create and activate virtual environment
-python -m venv .venv_gpu
-# Windows:
-.venv_gpu\Scripts\activate
-# Linux:
-source .venv_gpu/bin/activate
-
 # Install dependencies
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-pip install fastapi uvicorn faiss-cpu transformers peft pandas pillow
+pip install -r requirements.txt
 
-# Start the FastAPI server
-uvicorn backend.app:app --host 0.0.0.0 --port 8000
+# Start the Backend Server
+python app.py
 ```
-Backend API will be live at `http://localhost:8000` (Swagger docs at `http://localhost:8000/docs`).
+Backend API will be live at `http://127.0.0.1:8000` (Swagger docs at `http://127.0.0.1:8000/docs`).
 
 ### 3. Frontend Setup
 ```bash
 cd frontend
 npm install
-npm run dev -- --host
+npm run dev -- --host 127.0.0.1
 ```
-Frontend web application will be accessible at `http://localhost:5173`.
+Frontend web application will be accessible at `http://127.0.0.1:5173`.
 
 ---

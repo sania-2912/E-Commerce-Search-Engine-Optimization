@@ -26,22 +26,22 @@ import pandas as pd
 import torch
 
 # Add project root to path
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.indexing.models.caption_model import CaptionModel
-from backend.indexing.models.normalization_model import NormalizationModel
-from backend.indexing.models.embedding_model import EmbeddingModel
+from Indexing_Pipeline.models.caption_model import CaptionModel
+from Indexing_Pipeline.models.normalization_model import NormalizationModel
+from Indexing_Pipeline.models.embedding_model import EmbeddingModel
 
-from backend.indexing.logic.caption_generator import CaptionGenerator
-from backend.indexing.logic.text_normalizer import TextNormalizer
-from backend.indexing.logic.embedding_generator import EmbeddingGenerator
+from Indexing_Pipeline.logic.caption_generator import CaptionGenerator
+from Indexing_Pipeline.logic.text_normalizer import TextNormalizer
+from Indexing_Pipeline.logic.embedding_generator import EmbeddingGenerator
 
-from backend.indexing.storage.postgres_writer import DatabaseWriter
-from backend.indexing.storage.faiss_writer import FAISSWriter
+from Indexing_Pipeline.storage.postgres_writer import DatabaseWriter
+from Indexing_Pipeline.storage.faiss_writer import FAISSWriter
 
-from backend.indexing.utils.logger import setup_logger
-from backend.indexing.utils.batching import create_batches
+from Indexing_Pipeline.utils.logger import setup_logger
+from Indexing_Pipeline.utils.batching import create_batches
 
 logger = setup_logger(__name__)
 

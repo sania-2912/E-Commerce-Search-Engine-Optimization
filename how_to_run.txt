@@ -1,0 +1,56 @@
+# E-COMMERCE SEARCH ENGINE - SETUP & RUN GUIDE
+
+STEP 1: CLONE THE REPOSITORY
+-----------------------------
+git clone https://github.com/SandeshAwate6055/E-Commerce-Search-Engine-Optimization-.git
+cd E-Commerce-Search-Engine-Optimization-
+
+
+STEP 2: INSTALL DEPENDENCIES
+-----------------------------
+# Create virtual environment
+python -m venv .venv
+.venv\Scripts\activate   # On Windows
+# source .venv/bin/activate  # On Linux/Mac
+
+pip install -r requirements.txt
+
+
+STEP 3: DOWNLOAD & SETUP MODELS
+--------------------------------
+Refer to download_model.txt for direct download links and commands:
+- BAAI/bge-large-en-v1.5 (Dense text embeddings)
+- openai/clip-vit-base-patch32 (Visual cross-modal reranking)
+- Qwen/Qwen2.5-0.5B-Instruct + LoRA adapter in models/qwen_0.5b_ecommerce_lora/
+
+
+STEP 4: RUN OFFLINE INDEXING (OPTIONAL - PRE-INDEXED CATALOG READY)
+-------------------------------------------------------------------
+# To run full indexing pipeline:
+python Indexing_Pipeline/run_indexing.py
+
+# To verify 200 authentic smartphones indexing:
+python Indexing_Pipeline/scripts/apply_unique_mobiles_pipeline.py
+
+
+STEP 5: TEST RETRIEVAL PIPELINE (CLI)
+--------------------------------------
+python Retrieval_Pipeline/run_test.py
+
+
+STEP 6: RUN THE FULL WEB APPLICATION
+-------------------------------------
+# Start the Backend API (FastAPI) on port 8000:
+python app.py
+
+# In a separate terminal, start the React Frontend UI on port 5173:
+cd frontend
+npm install
+npm run dev -- --host 127.0.0.1
+
+
+STEP 7: ACCESS IN BROWSER
+--------------------------
+Frontend UI:  http://127.0.0.1:5173
+Backend API:   http://127.0.0.1:8000
+API Docs:      http://127.0.0.1:8000/docs

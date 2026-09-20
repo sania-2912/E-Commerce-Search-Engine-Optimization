@@ -1,0 +1,29 @@
+# Core Deep Learning & NLP
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.38.0
+accelerate>=0.28.0
+peft>=0.9.0
+qwen-vl-utils>=0.0.2
+
+# Vector Search & Embeddings
+faiss-cpu>=1.7.4
+sentence-transformers>=2.2.2
+numpy>=1.24.0
+
+# Backend Web Framework
+fastapi>=0.109.0
+uvicorn>=0.27.0
+pydantic>=2.5.0
+python-multipart>=0.0.9
+
+# Data Processing & Storage
+pandas>=2.0.0
+pillow>=10.0.0
+pyyaml>=6.0.1
+requests>=2.31.0
+sqlite3-to-mysql>=2.1.0; extra == "optional"
+psycopg2-binary>=2.9.9; extra == "optional"
+
+# Quality & Utilities
+tqdm>=4.66.0
