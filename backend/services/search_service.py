@@ -393,6 +393,13 @@ def search(
     if has_text:
         text_parse = parse_text_query(text)
         semantic_q = text_parse.get("semantic_query", text)
+        clean_q = text.lower().strip()
+
+        # Domain query intent enhancement for Mobiles category
+        if clean_q in ["mobile", "mobiles", "smartphone", "smartphones", "phone", "phones", "5g mobile", "5g phone"]:
+            semantic_q = "smartphone mobile phone 5G flagship device"
+            if not text_parse.get("category_hint"):
+                text_parse["category_hint"] = "Mobiles"
 
         # Stage 1: Dense Retrieval via BGE (1024-dim)
         query_vec = encode_bge_text(semantic_q)

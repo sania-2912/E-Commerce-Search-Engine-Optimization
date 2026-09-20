@@ -190,3 +190,64 @@ async def multimodal_search(
     finally:
         if saved_path:
             cleanup_upload(saved_path)
+
+
+@router.get("/deals")
+def get_deals(limit: int = 8):
+    """Return top discounted deals for homepage."""
+    import pandas as pd
+    import backend.services.model_loader as ml
+    if ml.products_df is None or len(ml.products_df) == 0:
+        return []
+    df = ml.products_df.dropna(subset=["retail_price", "discounted_price"])
+    df = df[(df["retail_price"] > df["discounted_price"]) & (df["discounted_price"] > 100)].copy()
+    df["discount_pct"] = ((df["retail_price"] - df["discounted_price"]) / df["retail_price"]) * 100
+    top_deals = df.sort_values(by="discount_pct", ascending=False).head(limit)
+    res = []
+    for rank, (_, row) in enumerate(top_deals.iterrows(), start=1):
+        res.append({
+            "rank": rank,
+            "pid": str(row["pid"]),
+            "product_name": str(row["product_name"]),
+            "main_category": str(row["main_category"]),
+            "brand": str(row["brand"]) if pd.notna(row["brand"]) else "Brand",
+            "retail_price": float(row["retail_price"]),
+            "discounted_price": float(row["discounted_price"]),
+            "image_path": str(row["image_path"]),
+            "raw_caption": str(row.get("raw_caption", "")),
+            "norm_text": str(row.get("norm_text", "")),
+            "final_score": 0.95,
+            "retrieved_by": "deals",
+        })
+    return res
+
+
+@router.get("/suggested")
+def get_suggested(limit: int = 8):
+    """Return curated suggested products across categories for homepage."""
+    import pandas as pd
+    import backend.services.model_loader as ml
+    if ml.products_df is None or len(ml.products_df) == 0:
+        return []
+    cats = ["Clothing", "Footwear", "Watches", "Bags, Wallets & Belts", "Jewellery"]
+    df = ml.products_df[ml.products_df["main_category"].isin(cats)].dropna(subset=["discounted_price"]).copy()
+    if len(df) < limit:
+        df = ml.products_df.dropna(subset=["discounted_price"]).copy()
+    sample = df.sample(min(limit, len(df)), random_state=42)
+    res = []
+    for rank, (_, row) in enumerate(sample.iterrows(), start=1):
+        res.append({
+            "rank": rank,
+            "pid": str(row["pid"]),
+            "product_name": str(row["product_name"]),
+            "main_category": str(row["main_category"]),
+            "brand": str(row["brand"]) if pd.notna(row["brand"]) else "Brand",
+            "retail_price": float(row["retail_price"]) if pd.notna(row["retail_price"]) else None,
+            "discounted_price": float(row["discounted_price"]) if pd.notna(row["discounted_price"]) else None,
+            "image_path": str(row["image_path"]),
+            "raw_caption": str(row.get("raw_caption", "")),
+            "norm_text": str(row.get("norm_text", "")),
+            "final_score": 0.92,
+            "retrieved_by": "suggested",
+        })
+    return res

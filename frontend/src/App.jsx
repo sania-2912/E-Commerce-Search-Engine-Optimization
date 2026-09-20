@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
-import { ResultsGrid } from "./components/ResultsGrid";
+import React, { useEffect, useState } from "react";
+import { TopUtilityBar } from "./components/TopUtilityBar";
 import { SearchBar } from "./components/SearchBar";
-import { fetchHealth } from "./services/api";
+import { CategoryNavBar } from "./components/CategoryNavBar";
+import { HeroPromoBanners } from "./components/HeroPromoBanners";
+import { ProductSection } from "./components/ProductSection";
+import { ResultsGrid } from "./components/ResultsGrid";
+import { fetchDeals, fetchSuggested } from "./services/api";
 import { useSearch } from "./hooks/useSearch";
 
 function InferredFilters({ textParse }) {
@@ -86,38 +90,6 @@ function DeveloperPanel({ meta, results }) {
   );
 }
 
-function HealthStatus() {
-  const [health, setHealth] = useState({ state: "checking", message: "Connecting to Engine..." });
-
-  useEffect(() => {
-    let active = true;
-
-    fetchHealth()
-      .then((data) => {
-        if (!active) return;
-        setHealth({
-          state: data?.models_loaded ? "ready" : "loading",
-          message: data?.models_loaded
-            ? `🟢 4,681 Products Indexed (RTX 2050 CUDA)`
-            : "API reachable, models loading",
-        });
-      })
-      .catch(() => {
-        if (!active) return;
-        setHealth({
-          state: "offline",
-          message: "⚠️ Backend Offline",
-        });
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  return <span className={`health-pill health-${health.state}`}>{health.message}</span>;
-}
-
 export default function App() {
   const {
     query,
@@ -135,6 +107,23 @@ export default function App() {
     reset,
   } = useSearch();
 
+  const [activeCategory, setActiveCategory] = useState("for-you");
+  const [deals, setDeals] = useState([]);
+  const [suggested, setSuggested] = useState([]);
+  const [cartCount, setCartCount] = useState(2);
+
+  // Load Homepage initial curated feeds
+  useEffect(() => {
+    fetchDeals(8)
+      .then((data) => setDeals(data || []))
+      .catch((err) => console.warn("Failed to load deals:", err));
+
+    fetchSuggested(8)
+      .then((data) => setSuggested(data || []))
+      .catch((err) => console.warn("Failed to load suggested:", err));
+  }, []);
+
+  // Handle Find Similar
   function handleFindSimilar(product) {
     const searchTerms = [
       product.main_category,
@@ -142,54 +131,175 @@ export default function App() {
     ]
       .filter(Boolean)
       .join(" ");
-    setQuery(searchTerms || product.product_name);
+    const finalQ = searchTerms || product.product_name;
+    setQuery(finalQ);
+    runSearch(10, 0.5, 0.5, finalQ);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // Handle Category Selection
+  function handleSelectCategory(cat) {
+    setActiveCategory(cat.id);
+    if (!cat.query) {
+      // "For You" resets back to homepage feed
+      reset();
+    } else {
+      setQuery(cat.label);
+      runSearch(12, 0.6, 0.4, cat.query);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  // Handle Quick search from banners
+  function handleQuickSearch(q) {
+    setQuery(q);
+    runSearch(10, 0.5, 0.5, q);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  const isSearchActive = results !== null || loading;
+
   return (
-    <main className="app-shell">
-      <header className="top-bar">
-        <div>
-          <div className="brand-badge">Enterprise E-Commerce Multimodal AI</div>
-          <h1>Discover Fashion & Lifestyle Products</h1>
-          <p className="hero-subtitle">
-            Natural language semantic search and visual similarity across 4,681 catalog items
-          </p>
+    <div className="marketplace-app">
+      {/* 1. Top Utility Navigation Bar */}
+      <TopUtilityBar cartCount={cartCount} />
+
+      {/* 2. Main Search Header with Brand, Full Search Bar & Actions */}
+      <header className="main-sticky-header">
+        <div className="header-inner-wrap">
+          <SearchBar
+            query={query}
+            onQueryChange={setQuery}
+            onSearch={runSearch}
+            onReset={reset}
+            loading={loading}
+            cartCount={cartCount}
+          />
         </div>
-        <HealthStatus />
+
+        {/* 3. Horizontal Category Navigation Bar */}
+        <CategoryNavBar
+          activeCategory={activeCategory}
+          onSelectCategory={handleSelectCategory}
+        />
       </header>
 
-      <section className="search-panel" aria-label="Search products">
-        <SearchBar
-          query={query}
-          onQueryChange={setQuery}
-          imagePreview={imagePreview}
-          onImageSelect={selectImage}
-          onImageClear={clearImage}
-          onSearch={runSearch}
-          onReset={reset}
-          loading={loading}
-          mode={mode}
-        />
+      {/* 4. Main Body Content */}
+      <main className="main-content-layout">
+        {error && (
+          <section className="error-banner" role="alert">
+            <div className="error-icon">⚠️</div>
+            <div className="error-content">
+              <strong>Search Encountered an Issue</strong>
+              <p>{error}</p>
+            </div>
+            <button type="button" className="error-dismiss-btn" onClick={reset}>
+              Dismiss
+            </button>
+          </section>
+        )}
 
-        <InferredFilters textParse={meta?.text_parse} />
-      </section>
+        {/* Search Results View */}
+        {isSearchActive ? (
+          <div className="search-results-container">
+            {/* Breadcrumb / Back Bar */}
+            <div className="search-breadcrumb-bar">
+              <button type="button" className="back-to-home-btn" onClick={reset}>
+                ← Back to Home
+              </button>
+              <span className="breadcrumb-divider">/</span>
+              <span className="breadcrumb-current">
+                {query ? `Search: "${query}"` : "Search Results"}
+              </span>
+            </div>
 
-      {error && (
-        <section className="error-state" role="alert">
-          <strong>Search could not be completed.</strong>
-          <p>{error}</p>
-        </section>
-      )}
+            <InferredFilters textParse={meta?.text_parse} />
 
-      <ResultsGrid
-        results={results}
-        meta={meta}
-        loading={loading}
-        loadingMsg={loadingMsg}
-        onFindSimilar={handleFindSimilar}
-      />
+            <ResultsGrid
+              results={results}
+              meta={meta}
+              loading={loading}
+              loadingMsg={loadingMsg}
+              onFindSimilar={handleFindSimilar}
+            />
 
-      <DeveloperPanel meta={meta} results={results} />
-    </main>
+            <DeveloperPanel meta={meta} results={results} />
+          </div>
+        ) : (
+          /* Homepage Default View */
+          <div className="homepage-content-container">
+            {/* Hero & Promotion Banners Grid */}
+            <HeroPromoBanners onQuickSearch={handleQuickSearch} />
+
+            {/* Product Carousels / Sections */}
+            <ProductSection
+              title="🔥 Deals for You"
+              subtitle="Up to 75% off on top lifestyle, footwear & apparel"
+              badgeText="Limited Time"
+              products={deals}
+              onFindSimilar={handleFindSimilar}
+              onViewAll={() => handleQuickSearch("Top Deals discount")}
+            />
+
+            <ProductSection
+              title="✨ Suggested For You"
+              subtitle="Curated products across 6,681 AI-verified catalog items"
+              badgeText="Recommended"
+              products={suggested}
+              onFindSimilar={handleFindSimilar}
+              onViewAll={() => handleQuickSearch("Popular trending")}
+            />
+          </div>
+        )}
+      </main>
+
+      {/* Modern Marketplace Footer */}
+      <footer className="marketplace-footer">
+        <div className="footer-top-grid">
+          <div className="footer-col">
+            <h4>ABOUT</h4>
+            <ul>
+              <li><a href="#about">About ShopAI</a></li>
+              <li><a href="#careers">Careers</a></li>
+              <li><a href="#press">Press Stories</a></li>
+              <li><a href="#corporate">Corporate Information</a></li>
+            </ul>
+          </div>
+          <div className="footer-col">
+            <h4>HELP & SUPPORT</h4>
+            <ul>
+              <li><a href="#payments">Payments</a></li>
+              <li><a href="#shipping">Shipping & Delivery</a></li>
+              <li><a href="#returns">Cancellation & Returns</a></li>
+              <li><a href="#faq">FAQ</a></li>
+            </ul>
+          </div>
+          <div className="footer-col">
+            <h4>CONSUMER POLICY</h4>
+            <ul>
+              <li><a href="#terms">Terms of Use</a></li>
+              <li><a href="#security">Security</a></li>
+              <li><a href="#privacy">Privacy Policy</a></li>
+              <li><a href="#sitemap">E-Commerce Sitemap</a></li>
+            </ul>
+          </div>
+          <div className="footer-col">
+            <h4>AI ENGINE INFO</h4>
+            <p className="footer-ai-desc">
+              Powered by Two-Stage Hybrid Retrieval: Qwen2-VL-2B visual captions, Qwen2.5 SLM query normalization, BGE-Large dense text vectors (FAISS), and OpenAI CLIP ViT-B/32 multimodal cross-reranking.
+            </p>
+            <div className="footer-vram-tag">6,681 Products • Sub-100ms CUDA Retrieval</div>
+          </div>
+        </div>
+        <div className="footer-bottom-bar">
+          <span>© 2026 ShopAI E-Commerce Multimodal Search Engine. All rights reserved.</span>
+          <div className="footer-badges">
+            <span>🛡️ 100% Authentic Products</span>
+            <span>📦 Fast Delivery</span>
+            <span>🔒 Secure Payments</span>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }

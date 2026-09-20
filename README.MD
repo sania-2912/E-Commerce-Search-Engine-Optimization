@@ -32,12 +32,12 @@ Optimized to run **100% on a consumer 4 GB GPU (NVIDIA RTX 2050)** without CPU m
 ### System Architecture Overview
 The architecture completely decouples the heavy offline vision-language distillation and embedding generation from real-time online query serving:
 
-![System Architecture](./Figure1_Architecture.jpg)
+![System Architecture](https://raw.githubusercontent.com/SandeshAwate6055/E-Commerce-Search-Engine-Optimization-/63a6a26/Figure1_Architecture.jpg)
 
 ### Real-Time Query Execution Flowchart
 Incoming queries pass through an automated fast-path or the fine-tuned LoRA intent parser, followed by two-stage dense recall and in-memory dot-product reranking:
 
-![Online Query Flowchart](./Figure2_Flowchart.jpg)
+![Online Query Flowchart](https://raw.githubusercontent.com/SandeshAwate6055/E-Commerce-Search-Engine-Optimization-/63a6a26/Figure2_Flowchart.jpg)
 
 ---
 

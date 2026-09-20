@@ -70,6 +70,7 @@ export function useSearch() {
     if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImagePreview(null);
     setResults(null);
+
     setMeta(null);
     setError(null);
     setLoading(false);
@@ -77,8 +78,9 @@ export function useSearch() {
 
   /** Run a search based on current inputs */
   const runSearch = useCallback(
-    async (topK = 10, textWeight = 0.5, imageWeight = 0.5) => {
-      const hasText  = query.trim().length > 0;
+    async (topK = 10, textWeight = 0.5, imageWeight = 0.5, queryOverride = null) => {
+      const activeQuery = queryOverride !== null ? queryOverride : query;
+      const hasText  = activeQuery.trim().length > 0;
       const hasImage = imageFile !== null;
 
       if (!hasText && !hasImage) {
@@ -96,10 +98,10 @@ export function useSearch() {
 
         if (hasText && hasImage) {
           setLoadingMsg("Understanding query and image…");
-          data = await searchMultimodal(query, imageFile, topK, textWeight, imageWeight);
+          data = await searchMultimodal(activeQuery, imageFile, topK, textWeight, imageWeight);
         } else if (hasText) {
           setLoadingMsg("Understanding your query…");
-          data = await searchByText(query, topK);
+          data = await searchByText(activeQuery, topK);
         } else {
           setLoadingMsg("Analyzing your image…");
           data = await searchByImage(imageFile, topK);

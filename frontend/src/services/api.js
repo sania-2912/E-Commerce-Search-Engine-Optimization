@@ -42,9 +42,7 @@ export async function searchByImage(imageFile, topK = 10) {
   const form = new FormData();
   form.append("file", imageFile);
   form.append("top_k", String(topK));
-  const { data } = await client.post("/search/image", form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const { data } = await client.post("/search/image", form);
   return data;
 }
 
@@ -69,9 +67,7 @@ export async function searchMultimodal(
   form.append("top_k", String(topK));
   form.append("text_weight", String(textWeight));
   form.append("image_weight", String(imageWeight));
-  const { data } = await client.post("/search/multimodal", form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const { data } = await client.post("/search/multimodal", form);
   return data;
 }
 
@@ -84,4 +80,16 @@ export function getProductImageUrl(imagePath) {
   if (!imagePath) return null;
   const filename = imagePath.replace(/\\/g, "/").split("/").pop();
   return `${BASE_URL}/images/${filename}`;
+}
+
+/** GET /search/deals */
+export async function fetchDeals(limit = 8) {
+  const { data } = await client.get(`/search/deals?limit=${limit}`);
+  return data;
+}
+
+/** GET /search/suggested */
+export async function fetchSuggested(limit = 8) {
+  const { data } = await client.get(`/search/suggested?limit=${limit}`);
+  return data;
 }

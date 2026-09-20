@@ -45,3 +45,7 @@ research.md
 research_evaluation_report.md
 run_background.ps1
 run_background_indexing.bat
+
+# Offline assets & private files (not for Git)
+offline_assets/
+local_files/
