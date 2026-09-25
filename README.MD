@@ -18,7 +18,7 @@ An AI-powered **multimodal e-commerce search system** that enables users to disc
 
 The system follows a multimodal retrieval pipeline where user queries are processed by AI models, converted into meaningful representations, and matched against the product catalog.
 
-![System Architecture](architecture.jpg)
+![System Architecture](system_architecture.jpg)
 
 ---
 
